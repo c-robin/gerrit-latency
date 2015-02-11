@@ -18,19 +18,17 @@ class Commit():
 def parseDate(date_string):
     return datetime.strptime(date_string, "%d. %b %I:%M")
 
-config_file = open('passwd', 'r')
-gerrit_user = config_file.readline().rstrip()
-gerrit_pass = config_file.readline().rstrip()
-config_file.close()
-print("login: " + gerrit_user)
-print("passwd: " + gerrit_pass)
-
-gerrit_ssh_port = "29418"
-gerrit_http_port = "8080"
-gerrit_url = "localhost"
-ssh_public_key = "~/.ssh/id_rsa"
-#DO not forget to use status:merged in request
-gerrit_request = "owner:self status:merged"
+#Loading config
+config = {}
+execfile("conf.py", config)
+print "Your config", config
+gerrit_user = config["gerrit_user"]
+gerrit_pass = config["gerrit_pass"]
+gerrit_ssh_port = config["gerrit_ssh_port"]
+gerrit_http_port = config["gerrit_http_port"]
+gerrit_url = config["gerrit_url"]
+ssh_public_key = config["ssh_public_key"]
+gerrit_request = config["gerrit_request"]
 
 ret = subprocess.Popen(["ssh","-p",gerrit_ssh_port, "-i", ssh_public_key, gerrit_user + "@" + gerrit_url, "gerrit query " + gerrit_request], stdout=subprocess.PIPE);
 out, err = ret.communicate()
