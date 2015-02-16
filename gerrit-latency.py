@@ -4,11 +4,11 @@
 import urllib
 import subprocess
 import re
-from urllib2 import Request, urlopen, URLError, HTTPBasicAuthHandler, HTTPPasswordMgrWithDefaultRealm, build_opener, install_opener
 import json
 from requests.auth import HTTPDigestAuth
 import requests
 from datetime import datetime
+from workdays import networkdays
 
 class Commit():
 
@@ -36,40 +36,74 @@ gerrit_request = config["gerrit_request"]
 
 changes_id_list = []
 commits_list = []
-commit_start_date = None
-commit_merge_date = None
+data_list = []
 
-try:
+def get_changes(gerrit_request=""):
+    if gerrit_request == "":
+        gerrit_request = config["gerrit_request"]
     url =  "http://" + gerrit_url + ":" + gerrit_http_port + "/a/" + "changes/?q=" + gerrit_request
     r = requests.get(url, auth = HTTPDigestAuth(gerrit_user, gerrit_pass), timeout=None, proxies = None)
-    json_changes = json.loads(r.text[4:]) #We have to remove ")]}'" from the beginning of the response
-except URLError, e:
-        print 'REST error:', e
+    #We have to remove ")]}'" from the beginning of the response
+    json_changes = json.loads(r.text[4:])
+    return json_changes
 
-for change in json_changes:
-    changes_id_list.append(change["id"])
+def get_changes_detail(gerrit_request=""):
+    json_changes = get_changes(gerrit_request)
 
-#Call gerrit_REST_API
-for change in changes_id_list:
-    try:
+    for change in json_changes:
+        changes_id_list.append(change["id"])
+
+    data_list = []
+
+    #Call gerrit_REST_API
+    for change in changes_id_list:
         url = "http://" + gerrit_url + ":" + gerrit_http_port + "/a/" + "changes/" + change + "/detail"
         r = requests.get(url, auth = HTTPDigestAuth(gerrit_user, gerrit_pass), timeout=None, proxies = None)
 
         #We have to remove ")]}'" from the beginning of the response
         data = json.loads(r.text[4:])
+        data_list.append(data)
+    return data_list
+
+def analyse_detail(data_list):
+    commits_list = []
+
+    #Construction of commits_list
+    for data in data_list:
         # We take the first message as commit_date
         commit_start_date = parseDate(data["messages"][0]["date"][0:19])
         for message in data["messages"]:
             if "successfully merged" in message["message"] or "successfully rebased" in message["message"]:
                 commit_merge_date = parseDate(message["date"][0:19])
                 commits_list.append(Commit(commit_start_date, commit_merge_date))
-    except URLError, e:
-        print 'REST error:', e
-        
-print str(len(commits_list)), str(len(changes_id_list))
 
-for commit in commits_list:
-    print commit
+    print str(len(commits_list)), str(len(changes_id_list))
+    for commit in commits_list:
+        print commit
 
-latency = [commit.latency() for commit in commits_list]
-print latency
+    #Compute Latency annd display
+    latency = [commit.latency() for commit in commits_list]
+    print latency
+
+def analyse(data_list):
+    commits_list = []
+
+    #Construction of commits_list
+    for data in data_list:
+        # We take the first message as commit_date
+        commit_start_date = parseDate(data["created"][0:19])
+        commit_merge_date = parseDate(data["updated"][0:19])
+
+        commits_list.append(Commit(commit_start_date, commit_merge_date))
+
+    print str(len(commits_list)), str(len(changes_id_list))
+    for commit in commits_list:
+        print commit
+
+    #Compute Latency annd display
+    latency = [commit.latency() for commit in commits_list]
+    print latency
+
+
+
+
