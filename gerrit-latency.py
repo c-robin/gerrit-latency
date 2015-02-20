@@ -98,7 +98,7 @@ def get_changes_detail(gerrit_request=""):
 
     data_list = []
 
-    #Call gerrit_REST_API http://git.ullink.lan:8080/a/changes/Id83e45438a520def11872600f3fed2021d9e8988/detail
+    #Call gerrit_REST_API
     for change in changes_id_list:
         url = "http://" + gerrit_url + ":" + gerrit_http_port + "/a/" + "changes/" + change + "/detail"
         r = requests.get(url, auth = HTTPDigestAuth(gerrit_user, gerrit_pass), timeout=None, proxies = None)
