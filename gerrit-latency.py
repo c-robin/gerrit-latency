@@ -32,11 +32,11 @@ class Commit():
         
     
     def latency(self):
-    """ This method give the latency of the commit in workdays
+        """ This method give the latency of the commit in workdays
 
-    Returns:
-        int representing the latency of the commit in days
-    """
+        Returns:
+            int representing the latency of the commit in days
+        """
         #return (self.merge - self.start).days
         return networkdays(self.start, self.merge)
 
