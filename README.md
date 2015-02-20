@@ -14,6 +14,6 @@ You need to edit conf.py with all informations from your gerrit server and your 
 Within python interpreter:
 
 ```
-> execfile("gerrit_latency.py")
+> execfile("gerrit-latency.py")
 > analyse_details(get_change_details("owner:self+status:merged"))
 ```
